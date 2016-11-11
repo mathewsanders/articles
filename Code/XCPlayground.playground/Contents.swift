@@ -1,8 +1,8 @@
 import UIKit
-import XCPlayground
+import PlaygroundSupport
 /*:
 
-# XCPlayground
+# PlaygroundSupport
 
 *Play.*
 
@@ -41,13 +41,18 @@ The `Resources` folder, embedded in the Playground package alongside `Sources`, 
 
 */
 let forecasts: [[String: AnyObject]] = {
-    let jsonPath = NSBundle.mainBundle().bundlePath.stringByAppendingPathComponent("weather.json")
-    if let
-        jsonData = NSData(contentsOfFile: jsonPath),
-        json = NSJSONSerialization.JSONObjectWithData(jsonData, options: nil, error: nil) as? [String: AnyObject],
-        forecasts = json["hourly_forecast"] as? [[String: AnyObject]]
-    {
-        return forecasts
+    
+    do {
+        let jsonUrl = Bundle.main.url(forResource: "weather", withExtension: "json")!
+        let jsonData = try Data(contentsOf: jsonUrl)
+        
+        if let json = try JSONSerialization.jsonObject(with: jsonData, options: []) as? [String: AnyObject],
+            let forecasts = json["hourly_forecast"] as? [[String: AnyObject]]
+        {
+            return forecasts
+        }
+    } catch _ {
+        return []
     }
     
     return []
@@ -57,42 +62,28 @@ let forecasts: [[String: AnyObject]] = {
 
 ### Shared
 
-The contents of a "Shared Playground Data" directory inside your "Documents" folder are available to any Playground you create. Access the shared folder via the `XCPSharedDataDirectoryPath` constant.
+The contents of a "Shared Playground Data" directory inside your "Documents" folder are available to any Playground you create. Access the shared folder via the `playgroundSharedDataDirectory` constant.
 
 To try this out yourself, you'll need to create the directory at "~/Documents/Shared Playground Data". Here we're attempting to load an image named "image.png":
 */
-let sharedImagePath = XCPSharedDataDirectoryPath.stringByAppendingPathComponent("image.png")
+let sharedImagePath = playgroundSharedDataDirectory.appendingPathComponent("image.png").relativePath
+
 if let image = UIImage(contentsOfFile: sharedImagePath) {
     image
 }
 
 /*:
 
-## Captured Values
+## Charting Values
 
 A Playground normally shows the results of simple expressions immediately. Arrays, strings, numbers, and more have their values shown in the results pane as they are calculated. But what about values that change over time?
 
-By using the `XCPCaptureValue()` function, we can build a graph of a changing value over a series of iterations. Returning to our weather sample, let's take a look at the hourly temperatures in the data, using `XCPCaptureValue` to display the value of `temperature` in the Assistant Editor's timeline view:
+Choosing **Editor → Show Result For Current Line** will capture the current line's values and display the chart directly in the flow of the Playground:
 
 */
 for forecast in forecasts {
-    if let
-        tempString = forecast["temp"]?["english"] as? String,
-        temperature = tempString.toInt()
-    {
-        XCPCaptureValue("Temperature", temperature)
-    }
-}
-
-/*:
-
-Alternatively, choosing **Editor &rarr; Show Result For Current Line** will capture the current line's values and display the chart directly in the flow of the Playground:
-
-*/
-for forecast in forecasts {
-    if let
-        tempString = forecast["temp"]?["english"] as? String,
-        temperature = tempString.toInt()
+    if let tempString = forecast["temp"]?["english"] as? String,
+        let temperature = Int(tempString)
     {
         temperature
     }
@@ -104,15 +95,15 @@ for forecast in forecasts {
 
 Unlike most Swift code that is written as part of an app or framework, Playgrounds are treated as *top-level code.* Top-level code in a Playground is executed instruction-by-instruction in order, from top to bottom. This container-less style of execution provides immediate feedback, but there is one problem: execution halts as soon as it reaches the end of the Playground. Network requests, timers, and long-running background queues are abandoned before they can return to report on success or failure.
 
-To keep execution going long enough to see the results of these kinds of asynchronous operations, the `XCPlayground` module includes a function that extends the length of the process:
+To keep execution going long enough to see the results of these kinds of asynchronous operations, the `PlaygroundSupport` module includes a function that extends the length of the process:
 */
 // Uncomment the following line to see this in action:
-// XCPSetExecutionShouldContinueIndefinitely(continueIndefinitely: true)
+// PlaygroundPage.current.needsIndefiniteExecution = true
 
-let url = NSURL(string: "http://httpbin.org/image/png")!
-let task = NSURLSession.sharedSession().dataTaskWithURL(url) {
+let url = URL(string: "http://httpbin.org/image/png")!
+let task = URLSession.shared.dataTask(with: url) {
     data, _, _ in
-    let image = UIImage(data: data)
+    let image = UIImage(data: data!)
 }
 task.resume()
 
@@ -171,6 +162,5 @@ It's possible to toggle rich documentation rendering either by selecting the **E
 
 ---
 
-Playgrounds represent a major shift in the way we share and learn about tools for OS X and iOS. A Playground can demonstrate each feature and provide a space for potential users to discover and explore the library you've created. Trade out your static `README.md` for an interactive `README.playground` and let the play begin anew.
-
-*/
+Playgrounds represent a major shift in the way we share and learn about tools for OS X and iOS. A Playground can demonstrate each feature and provide a space for potential users to discover and explore the library you've created. Trade out your static `README.md` for an interactive `README.playground` and let the play begin anew. 
+ */

@@ -10,15 +10,14 @@ typealias Coordinate = (x: CGFloat, y: CGFloat)
 /// and draws a line through each successive Coordinate.
 func pathFromPoints(coordinates: [Coordinate]) -> UIBezierPath {
     let path = UIBezierPath()
-    
     if let first = coordinates.first {
-        path.moveToPoint(CGPoint(first))
-        for point in dropFirst(coordinates) {
-            path.addLineToPoint(CGPoint(point))
+        path.move(to: CGPoint(x: first.x, y: first.y))
+        for coordinate in coordinates.dropFirst() {
+            path.addLine(to: CGPoint(x: coordinate.x, y: coordinate.y))
         }
     }
     
-    path.applyTransform(CGAffineTransformMakeTranslation(0.5, 0.5))
+    path.apply(CGAffineTransform(translationX: 0.5, y: 0.5))
     return path
 }
 
@@ -41,14 +40,14 @@ public class MacintoshView : UIView {
     
     public override init(frame: CGRect) {
         super.init(frame: frame)
-        backgroundColor = UIColor.clearColor()
+        backgroundColor = UIColor.clear
     }
     
     public required init(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    public override func drawRect(rect: CGRect) {
+    public override func draw(_ rect: CGRect) {
         for path in paths {
             path.stroke()
         }
